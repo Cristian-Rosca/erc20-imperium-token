@@ -29,6 +29,9 @@ contract Imperium is ERC20Interface{
     address public founder;
     mapping(address => uint) public balances;
 
+    mapping(address => mapping(address => uint)) allowed;
+
+
     constructor(){
         totalSupply = 1000000;
         founder = msg.sender;
@@ -48,5 +51,33 @@ contract Imperium is ERC20Interface{
 
         return true;
     }
+
+    function allowance(address tokenOwner, address spender) view public override returns(uint){
+        return allowed[tokenOwner][spender];
+    }
+
+    function approve(address spender, uint tokens) public override returns (bool success){
+        require(balances[msg.sender] >= tokens);
+        require(tokens > 0);
+
+        allowed[msg.sender][spender] = tokens;
+
+        emit Approval(msg.sender, spender, tokens);
+        return true;
+
+        // can also implement increaseAllowance and decreaseAllowance functions
+    }
+
+    function transferFrom(address from, address to, uint tokens) external override returns (bool success){
+        require(allowed[from][msg.sender] >= tokens);
+        require(balances[from] >= tokens);
+        balances[from] -= tokens;
+        allowed[from][msg.sender] -= tokens;
+        balances[to] += tokens;
+
+        emit Transfer(from, to, tokens);
+        return true;
+    }
+
 
 }
